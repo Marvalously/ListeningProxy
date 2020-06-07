@@ -1,0 +1,28 @@
+{
+  "name": "listeningproxy",
+  "version": "1.0.0",
+  "description": "JavaScript Proxy Provider that can have listeners added.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Marvalously/ListeningProxy.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "proxy",
+    "provider",
+    "listening",
+    "observable",
+    "deep",
+    "listening"
+  ],
+  "author": "Martin \"Marrow\" Rowlinson",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Marvalously/ListeningProxy/issues"
+  },
+  "homepage": "https://github.com/Marvalously/ListeningProxy#readme"
+}
