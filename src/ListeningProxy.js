@@ -2,10 +2,9 @@ import BaseProxyEvent from './core/BaseProxyEvent';
 import BeforeChangeEvent, {EVENT_TYPE_BEFORE_OBJECT_CHANGE} from './core/BeforeChangeEvent';
 import AfterChangeEvent, {EVENT_TYPE_AFTER_OBJECT_CHANGE} from './core/AfterChangeEvent';
 import GetPropertyEvent, {EVENT_TYPE_GET_PROPERTY} from './core/GetPropertyEvent';
+import GetTreewalkerEvent, {EVENT_TYPE_GET_TREEWALKER} from './core/GetTreewalkerEvent';
 
 import { isClass } from './utils';
-
-export const EVENT_TYPE_GET_TREEWALKER = 'getTreewalker'
 
 export const SYMBOL_IS_PROXY = Symbol('isProxy');
 export const SYMBOL_PROXY_TARGET = Symbol('proxyTarget');
@@ -407,52 +406,6 @@ class ProxyListeners {
 
     removeParent(parentProxyListener) {
         this.parentListeners.delete(parentProxyListener);
-    }
-}
-
-class GetTreewalkerEvent extends BaseProxyEvent {
-    #treeWalker;
-
-    #defaultPrevented = false;
-    #propagationStopped = false;
-
-    constructor(proxyListeners) {
-        super(proxyListeners, EVENT_TYPE_GET_TREEWALKER);
-    }
-
-    get propagates() {
-        return true;
-    }
-
-    get preventable() {
-        return true;
-    }
-
-    get defaultPrevented() {
-        return this.#defaultPrevented;
-    }
-
-    preventDefault(treeWalker) {
-        if (!treeWalker || typeof treeWalker !== 'function') {
-            throw new TypeError('Supplied treeWalker on GetTreewalkerEvent.preventDefault() must be a function');
-        }
-        if (!this.#defaultPrevented) {
-            this.#defaultPrevented = true;
-            this.#propagationStopped = true;
-            this.#treeWalker = treeWalker;
-        }
-    }
-
-    get propagationStopped() {
-        return this.#propagationStopped;
-    }
-
-    stopPropagation() {
-        this.#propagationStopped = true;
-    }
-
-    get treeWalker() {
-        return this.#treeWalker;
     }
 }
 
