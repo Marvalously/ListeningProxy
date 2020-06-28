@@ -1,10 +1,10 @@
 import BaseProxyEvent from './core/BaseProxyEvent';
 import BeforeChangeEvent, {EVENT_TYPE_BEFORE_OBJECT_CHANGE} from './core/BeforeChangeEvent';
 import AfterChangeEvent, {EVENT_TYPE_AFTER_OBJECT_CHANGE} from './core/AfterChangeEvent';
+import GetPropertyEvent, {EVENT_TYPE_GET_PROPERTY} from './core/GetPropertyEvent';
 
 import { isClass } from './utils';
 
-export const EVENT_TYPE_GET_PROPERTY = 'getProperty';
 export const EVENT_TYPE_GET_TREEWALKER = 'getTreewalker'
 
 export const SYMBOL_IS_PROXY = Symbol('isProxy');
@@ -407,77 +407,6 @@ class ProxyListeners {
 
     removeParent(parentProxyListener) {
         this.parentListeners.delete(parentProxyListener);
-    }
-}
-
-class GetPropertyEvent extends BaseProxyEvent {
-    #pty;
-    #defaultResult;
-    #actualResult;
-
-    #defaultPrevented = false;
-    #propagationStopped = false;
-
-    #firesBeforesAndAfters = false;
-    #asAction;
-
-    constructor(proxyListeners, pty, defaultResult) {
-        super(proxyListeners, EVENT_TYPE_GET_PROPERTY);
-        this.#pty = pty;
-        this.#defaultResult = defaultResult;
-        this.#actualResult = defaultResult;
-    }
-
-    get property() {
-        return this.#pty;
-    }
-
-    get defaultResult() {
-        return this.#defaultResult;
-    }
-
-    get propagates() {
-        return true;
-    }
-
-    get preventable() {
-        return true;
-    }
-
-    get propagationStopped() {
-        return this.#propagationStopped;
-    }
-
-    stopPropagation() {
-        this.#propagationStopped = true;
-    }
-
-    preventDefault(replacementResult, firesBeforesAndAfters, asAction) {
-        if (!this.#defaultPrevented) {
-            this.#defaultPrevented = true;
-            this.#propagationStopped = true;
-            this.#actualResult = replacementResult;
-            this.#firesBeforesAndAfters = (typeof firesBeforesAndAfters === 'boolean') && firesBeforesAndAfters && (typeof this.#actualResult === 'function');
-            if (this.#firesBeforesAndAfters) {
-                this.#asAction = '[[' + (asAction ? asAction : this.pty) + ']]';
-            }
-        }
-    }
-
-    get defaultPrevented() {
-        return this.#defaultPrevented;
-    }
-
-    get firesBeforesAndAfters() {
-        return this.#firesBeforesAndAfters;
-    }
-
-    get asAction() {
-        return this.#asAction;
-    }
-
-    get result() {
-        return this.#actualResult;
     }
 }
 
