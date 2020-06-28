@@ -1,14 +1,9 @@
-import BaseProxyEvent from './core/BaseProxyEvent';
 import BeforeChangeEvent, {EVENT_TYPE_BEFORE_OBJECT_CHANGE} from './core/BeforeChangeEvent';
 import AfterChangeEvent, {EVENT_TYPE_AFTER_OBJECT_CHANGE} from './core/AfterChangeEvent';
 import GetPropertyEvent, {EVENT_TYPE_GET_PROPERTY} from './core/GetPropertyEvent';
 import GetTreewalkerEvent, {EVENT_TYPE_GET_TREEWALKER} from './core/GetTreewalkerEvent';
-
+import * as symbols from './core/symbols';
 import { isClass } from './utils';
-
-export const SYMBOL_IS_PROXY = Symbol('isProxy');
-export const SYMBOL_PROXY_TARGET = Symbol('proxyTarget');
-export const SYMBOL_PROXY_LISTENERS = Symbol('proxyListeners');
 
 const ADD_LISTENER_METHOD_NAME = 'addListener';
 const REMOVE_LISTENER_METHOD_NAME = 'removeListener';
@@ -22,7 +17,7 @@ export class ListeningProxyFactory {
         if (!obj || typeof obj !== 'object') {
             throw new TypeError("ListeningProxy can only be created on objects or arrays");
         }
-        if (obj[SYMBOL_IS_PROXY]) {
+        if (obj[symbols.IS_PROXY]) {
             // already a listening proxy
             // set any initial listeners...
             Array.prototype.slice.call(arguments, 1).forEach(initial => {
@@ -38,11 +33,11 @@ export class ListeningProxyFactory {
         let handler = {
             get: function(target, pty, receiver) {
                 switch (pty) {
-                    case SYMBOL_IS_PROXY:
+                    case symbols.IS_PROXY:
                         return true;
-                    case SYMBOL_PROXY_LISTENERS:
+                    case symbols.PROXY_LISTENERS:
                         return this.proxyListeners;
-                    case SYMBOL_PROXY_TARGET:
+                    case symbols.PROXY_TARGET:
                         return this.proxyListeners.target;
                     case ADD_LISTENER_METHOD_NAME:
                         return this.addListener;
@@ -86,7 +81,7 @@ export class ListeningProxyFactory {
                 return result;
             },
             set: function(target, pty, value, receiver) {
-                if (PROXY_PROTECTED_PROPERTIES.has(pty) || pty === SYMBOL_PROXY_TARGET || pty === SYMBOL_IS_PROXY || pty === SYMBOL_PROXY_LISTENERS) {
+                if (PROXY_PROTECTED_PROPERTIES.has(pty) || pty === symbols.PROXY_TARGET || pty === symbols.IS_PROXY || pty === symbols.PROXY_LISTENERS) {
                     throw new TypeError('Property \'' + pty + '\' cannot be set on listening proxy');
                 }
                 let wasValue = target[pty];
@@ -99,13 +94,13 @@ export class ListeningProxyFactory {
                     if (!event.defaultPerformed) {
                         defaultAction();
                     }
-                    if (wasValue && typeof wasValue === 'object' && wasValue[SYMBOL_IS_PROXY]) {
-                        wasValue[SYMBOL_PROXY_LISTENERS].removeParent(this.proxyListeners);
+                    if (wasValue && typeof wasValue === 'object' && wasValue[symbols.IS_PROXY]) {
+                        wasValue[symbols.PROXY_LISTENERS].removeParent(this.proxyListeners);
                     }
                     if (value && typeof value === 'object') {
                         let newValueProxy = ListeningProxyFactory.create(value);
                         target[pty] = newValueProxy;
-                        newValueProxy[SYMBOL_PROXY_LISTENERS].addParent(this.proxyListeners, pty);
+                        newValueProxy[symbols.PROXY_LISTENERS].addParent(this.proxyListeners, pty);
                         ListeningProxyFactory.treeWalk(newValueProxy);
                     }
                     this.proxyListeners.fireAfters('set', pty, value, wasValue);
@@ -113,7 +108,7 @@ export class ListeningProxyFactory {
                 return true;
             },
             deleteProperty: function(target, pty) {
-                if (PROXY_PROTECTED_PROPERTIES.has(pty) || pty === SYMBOL_PROXY_TARGET || pty === SYMBOL_IS_PROXY || pty === SYMBOL_PROXY_LISTENERS) {
+                if (PROXY_PROTECTED_PROPERTIES.has(pty) || pty === symbols.PROXY_TARGET || pty === symbols.IS_PROXY || pty === symbols.PROXY_LISTENERS) {
                     throw new TypeError('Property \'' + pty + '\' cannot be deleted on listening proxy');
                 }
                 let wasValue = target[pty];
@@ -127,8 +122,8 @@ export class ListeningProxyFactory {
                     if (!event.defaultPerformed) {
                         defaultAction();
                     }
-                    if (wasValue && typeof wasValue === 'object' && wasValue[SYMBOL_IS_PROXY]) {
-                        wasValue[SYMBOL_PROXY_LISTENERS].removeParent(this.proxyListeners);
+                    if (wasValue && typeof wasValue === 'object' && wasValue[symbols.IS_PROXY]) {
+                        wasValue[symbols.PROXY_LISTENERS].removeParent(this.proxyListeners);
                     }
                     this.proxyListeners.fireAfters('deleteProperty', pty, value, wasValue);
                 }
@@ -179,9 +174,9 @@ export class ListeningProxyFactory {
                     });
                     // unparent any array elements no longer in the array...
                     wasValue.forEach(item => {
-                        if (item && typeof item === 'object' && item[SYMBOL_IS_PROXY] && !currentItems.has(item)) {
+                        if (item && typeof item === 'object' && item[symbols.IS_PROXY] && !currentItems.has(item)) {
                             // remove this as being parented...
-                            item[SYMBOL_PROXY_LISTENERS].removeParent(this.proxyListeners);
+                            item[symbols.PROXY_LISTENERS].removeParent(this.proxyListeners);
                         }
                     });
                     // make sure any items added are proxied and parented...
@@ -255,11 +250,11 @@ export class ListeningProxyFactory {
     }
 
     static treeWalk(proxy) {
-        if (!proxy || typeof proxy !== 'object' || !proxy[SYMBOL_IS_PROXY]) {
+        if (!proxy || typeof proxy !== 'object' || !proxy[symbols.IS_PROXY]) {
             throw new TypeError('Can only treeWalk on a listening proxy object!');
         }
-        let target = proxy[SYMBOL_PROXY_TARGET];
-        let parentProxyListener = proxy[SYMBOL_PROXY_LISTENERS];
+        let target = proxy[symbols.PROXY_TARGET];
+        let parentProxyListener = proxy[symbols.PROXY_LISTENERS];
         // see if there's a tree walker for this object...
         let event = parentProxyListener.fireGetTreewalkers();
         if (event.defaultPrevented) {
@@ -275,7 +270,7 @@ export class ListeningProxyFactory {
                     if (typeof child === 'object') {
                         proxyChild = ListeningProxyFactory.create(child);
                         target[i] = proxyChild;
-                        childListener = proxyChild[SYMBOL_PROXY_LISTENERS];
+                        childListener = proxyChild[symbols.PROXY_LISTENERS];
                         childListener.addParent(parentProxyListener, i);
                         ListeningProxyFactory.treeWalk(proxyChild);
                     }
@@ -287,7 +282,7 @@ export class ListeningProxyFactory {
                         if (typeof child === 'object') {
                             proxyChild = ListeningProxyFactory.create(child);
                             target[pty] = proxyChild;
-                            childListener = proxyChild[SYMBOL_PROXY_LISTENERS];
+                            childListener = proxyChild[symbols.PROXY_LISTENERS];
                             childListener.addParent(parentProxyListener, pty);
                             ListeningProxyFactory.treeWalk(proxyChild);
                         }
@@ -456,6 +451,7 @@ const ARRAY_FUNCTIONS_MAP = new Map([
         }
     ]
 ]);
+
 const ARRAY_FUNCTIONS_NO_DEFAULT_ACTION_RETURNS = new Map([
     ['pop',
         function(target) {
