@@ -1,3 +1,5 @@
+import { isClass } from './utils';
+
 export const EVENT_TYPE_BEFORE_OBJECT_CHANGE = 'beforeChange';
 export const EVENT_TYPE_AFTER_OBJECT_CHANGE = 'afterChange';
 export const EVENT_TYPE_GET_PROPERTY = 'getProperty';
@@ -52,7 +54,7 @@ export class ListeningProxyFactory {
                 } else {
                     result = target[pty];
                     // methods on classes need to be re-bound back onto the class instance...
-                    if (typeof result === 'function' && ListeningProxyFactory.isClass(target)) {
+                    if (typeof result === 'function' && isClass(target)) {
                         result = result.bind(target);
                     }
                 }
@@ -292,26 +294,6 @@ export class ListeningProxyFactory {
                 }
             }
         }
-    }
-
-    /*
-    * Utility method for determining if a given target is a class
-    *
-    * Kudos to https://stackoverflow.com/users/76840/aikeru
-    *      see https://stackoverflow.com/a/43197340/1891743
-    */
-    static isClass(target) {
-        if (!target || typeof target !== 'object') {
-            return false;
-        }
-        const isConstructorClass = target.constructor && target.constructor.toString().substring(0, 5) === 'class';
-        if (target.prototype === undefined) {
-            return isConstructorClass;
-        }
-        return isConstructorClass
-            || (target.prototype.constructor
-                && target.prototype.constructor.toString
-                && target.prototype.constructor.toString().substring(0, 5) === 'class');
     }
 
     constructor() {
