@@ -1,3 +1,4 @@
+import BaseProxyEvent from './core/BaseProxyEvent';
 import { isClass } from './utils';
 
 export const EVENT_TYPE_BEFORE_OBJECT_CHANGE = 'beforeChange';
@@ -405,37 +406,6 @@ class ProxyListeners {
 
     removeParent(parentProxyListener) {
         this.parentListeners.delete(parentProxyListener);
-    }
-}
-
-class BaseProxyEvent {
-    #proxyListeners;
-    #type;
-    #path = [];
-
-    constructor(proxyListeners, eventType) {
-        this.#proxyListeners = proxyListeners;
-        this.#type = eventType;
-    }
-
-    get type() {
-        return this.#type;
-    }
-
-    get target() {
-        return this.#proxyListeners.target;
-    }
-
-    get proxy() {
-        return this.#proxyListeners.proxy;
-    }
-
-    get path() {
-        return this.#path;
-    }
-
-    setPath(path) {
-        this.#path = path;
     }
 }
 
