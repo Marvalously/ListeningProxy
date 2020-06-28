@@ -13,6 +13,11 @@ const PROXY_PROTECTED_PROPERTIES = new Set([
 ]);
 
 class ListeningProxyFactory {
+
+    constructor() {
+        throw new Error('ListeningProxyFactory cannot be instantiated with constructor - use ListeningProxyFactory.create()');
+    }
+
     static create(obj, initialListeners) {
         if (!obj || typeof obj !== 'object') {
             throw new TypeError("ListeningProxy can only be created on objects or arrays");
@@ -236,7 +241,7 @@ class ListeningProxyFactory {
         // create the actual proxy...
         let result = new Proxy(obj, handler);
         // now we have the proxy, we can store it for use by the proxyListeners...
-        proxyListeners.setProxy(result);
+        proxyListeners.proxy = result;
         // set any initial listeners...
         Array.prototype.slice.call(arguments, 1).forEach(initial => {
             if (!initial || typeof initial !== 'object') {
@@ -291,10 +296,6 @@ class ListeningProxyFactory {
             }
         }
     }
-
-    constructor() {
-        throw new Error('ListeningProxyFactory cannot be instantiated with constructor - use ListeningProxyFactory.create()');
-    }
 }
 
 class ProxyListeners {
@@ -305,7 +306,7 @@ class ProxyListeners {
     listenersByEventType;
 
     target;
-    proxy;
+    #proxy;
 
     parentListeners = new Map();
 
@@ -319,8 +320,12 @@ class ProxyListeners {
         ]);
     }
 
-    setProxy(proxy) {
-        this.proxy = proxy;
+    set proxy(val) {
+        this.#proxy = val;
+    }
+
+    get proxy() {
+        return this.#proxy;
     }
 
     add(eventType, listener) {
