@@ -22,7 +22,7 @@
     "listening"
   ],
   "author": "Martin \"Marrow\" Rowlinson, Valentin Damian",
-  "license": "ISC",
+  "license": "Apache License Version 2.0",
   "bugs": {
     "url": "https://github.com/Marvalously/ListeningProxy/issues"
   },
