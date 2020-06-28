@@ -12,7 +12,7 @@ const PROXY_PROTECTED_PROPERTIES = new Set([
     REMOVE_LISTENER_METHOD_NAME
 ]);
 
-export class ListeningProxyFactory {
+class ListeningProxyFactory {
     static create(obj, initialListeners) {
         if (!obj || typeof obj !== 'object') {
             throw new TypeError("ListeningProxy can only be created on objects or arrays");
@@ -939,3 +939,5 @@ const SET_FUNCTIONS_MAP = new Map([
         }
     ]
 ]);
+
+export default ListeningProxyFactory;
