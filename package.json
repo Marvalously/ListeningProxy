@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:dev": "webpack --watch --mode=development --devtool=inline-source-map --info-verbosity verbose",
-    "build:prod": "webpack"
+    "build:prod": "webpack --mode=production"
   },
   "repository": {
     "type": "git",
@@ -30,6 +30,7 @@
   "devDependencies": {
     "@babel/core": "^7.10.3",
     "@babel/plugin-proposal-class-properties": "^7.10.1",
+    "@babel/plugin-proposal-private-methods": "^7.10.1",
     "@babel/preset-env": "^7.10.3",
     "babel-loader": "^8.1.0",
     "webpack": "^4.43.0",
