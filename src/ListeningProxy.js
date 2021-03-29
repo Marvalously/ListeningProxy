@@ -220,8 +220,8 @@ export class ListeningProxyFactory {
         if (Array.isArray(obj)) {
             additionalFunctions = ARRAY_FUNCTIONS_MAP;
         } else if (obj instanceof Int8Array || obj instanceof Uint8Array || obj instanceof Uint8ClampedArray
-                   || obj instanceof Int16Array || obj instanceof Uint16Array || obj instanceof Int32Array || obj instanceof Uint32Array
-                   || obj instanceof Float32Array || obj instanceof Float64Array || obj instanceof BigInt64Array || obj instanceof BigUint64Array) {
+            || obj instanceof Int16Array || obj instanceof Uint16Array || obj instanceof Int32Array || obj instanceof Uint32Array
+            || obj instanceof Float32Array || obj instanceof Float64Array /* || obj instanceof BigInt64Array || obj instanceof BigUint64Array */) {
             additionalFunctions = TYPED_ARRAY_FUNCTIONS_MAP;
         } else if (obj instanceof Date) {
             additionalFunctions = DATE_FUNCTIONS_MAP;
@@ -320,25 +320,20 @@ export class ListeningProxyFactory {
 }
 
 class ProxyListeners {
-    beforeListeners = new Set();
-    afterListeners = new Set();
-    getPropertyListeners = new Set();
-    getTreewalkerListeners = new Set();
-    listenersByEventType;
-
-    target;
-    proxy;
-
-    parentListeners = new Map();
-
     constructor(target) {
         this.target = target;
+        this.proxy = null;
+        this.beforeListeners = new Set();
+        this.afterListeners = new Set();
+        this.getPropertyListeners = new Set();
+        this.getTreewalkerListeners = new Set();
         this.listenersByEventType = new Map([
             [EVENT_TYPE_BEFORE_OBJECT_CHANGE, this.beforeListeners],
             [EVENT_TYPE_AFTER_OBJECT_CHANGE, this.afterListeners],
             [EVENT_TYPE_GET_PROPERTY, this.getPropertyListeners],
             [EVENT_TYPE_GET_TREEWALKER, this.getTreewalkerListeners]
         ]);
+        this.parentListeners = new Map();
     }
 
     setProxy(proxy) {
@@ -427,76 +422,65 @@ class ProxyListeners {
 }
 
 class BaseProxyEvent {
-    #proxyListeners;
-    #type;
-    #path = [];
-
     constructor(proxyListeners, eventType) {
-        this.#proxyListeners = proxyListeners;
-        this.#type = eventType;
+        this._proxyListeners = proxyListeners;
+        this._type = eventType;
+        this._path = [];
     }
 
     get type() {
-        return this.#type;
+        return this._type;
     }
 
     get target() {
-        return this.#proxyListeners.target;
+        return this._proxyListeners.target;
     }
 
     get proxy() {
-        return this.#proxyListeners.proxy;
+        return this._proxyListeners.proxy;
     }
 
     get path() {
-        return this.#path;
+        return this._path;
     }
 
     setPath(path) {
-        this.#path = path;
+        this._path = path;
     }
 }
 
 class BeforeChangeEvent extends BaseProxyEvent {
-    #action;
-    #pty;
-    #value;
-    #wasValue;
-    #defaultAction;
-    #args;
-
-    #defaultPrevented = false;
-    #propagationStopped = false;
-    #defaultPerformed = false;
-
     constructor(proxyListeners, action, pty, value, wasValue, defaultAction, args) {
         super(proxyListeners, EVENT_TYPE_BEFORE_OBJECT_CHANGE);
-        this.#action = action;
-        this.#pty = pty;
-        this.#value = value;
-        this.#wasValue = wasValue;
-        this.#defaultAction = defaultAction;
-        this.#args = args ? Array.prototype.slice.call(args) : undefined;
+        this._action = action;
+        this._pty = pty;
+        this._value = value;
+        this._wasValue = wasValue;
+        this._defaultAction = defaultAction;
+        this._args = args ? Array.prototype.slice.call(args) : undefined;
+        this._defaultPrevented = false;
+        this._propagationStopped = false;
+        this._defaultPerformed = false;
     }
 
     get action() {
-        return this.#action;
+        return this._action;
     }
 
     get property() {
-        return this.#pty;
+        return this._pty;
     }
 
     get value() {
-        return this.#value;
+        return this._value;
     }
 
     get wasValue() {
-        return this.#wasValue;
+        return this._wasValue;
     }
 
     get arguments() {
-        return this.#args;
+        return this._args;
     }
 
     get propagates() {
@@ -508,71 +492,64 @@ class BeforeChangeEvent extends BaseProxyEvent {
     }
 
     get propagationStopped() {
-        return this.#propagationStopped;
+        return this._propagationStopped;
     }
 
     stopPropagation() {
-        this.#propagationStopped = true;
+        this._propagationStopped = true;
     }
 
     get defaultPrevented() {
-        return this.#defaultPerformed;
+        return this._defaultPerformed;
     }
 
     get defaultPerformed() {
-        return this.#defaultPerformed;
+        return this._defaultPerformed;
     }
 
     performDefault() {
         let result;
-        if (!this.#defaultPerformed && !this.#defaultPrevented) {
-            this.#defaultPerformed = true;
-            result = this.#defaultAction();
+        if (!this._defaultPerformed && !this._defaultPrevented) {
+            this._defaultPerformed = true;
+            result = this._defaultAction();
         }
         return result;
     }
 
     preventDefault() {
-        this.#defaultPrevented = true;
+        this._defaultPrevented = true;
     }
 }
 
 class AfterChangeEvent extends BaseProxyEvent {
-    #action;
-    #pty;
-    #value;
-    #wasValue;
-    #args;
-
-    #propagationStopped = false;
-
     constructor(proxyListeners, action, pty, value, wasValue, args) {
         super(proxyListeners, EVENT_TYPE_AFTER_OBJECT_CHANGE);
-        this.#action = action;
-        this.#pty = pty;
-        this.#value = value;
-        this.#wasValue = wasValue;
-        this.#args = args ? Array.prototype.slice.call(args) : undefined;
+        this._action = action;
+        this._pty = pty;
+        this._value = value;
+        this._wasValue = wasValue;
+        this._args = args ? Array.prototype.slice.call(args) : undefined;
+        this._propagationStopped = false;
     }
 
     get action() {
-        return this.#action;
+        return this._action;
     }
 
     get property() {
-        return this.#pty;
+        return this._pty;
     }
 
     get value() {
-        return this.#value;
+        return this._value;
     }
 
     get wasValue() {
-        return this.#wasValue;
+        return this._wasValue;
     }
 
     get arguments() {
-        return this.#args;
+        return this._args;
     }
 
     get propagates() {
@@ -584,38 +561,32 @@ class AfterChangeEvent extends BaseProxyEvent {
     }
 
     get propagationStopped() {
-        return this.#propagationStopped;
+        return this._propagationStopped;
     }
 
     stopPropagation() {
-        this.#propagationStopped = true;
+        this._propagationStopped = true;
     }
 }
 
 class GetPropertyEvent extends BaseProxyEvent {
-    #pty;
-    #defaultResult;
-    #actualResult;
-
-    #defaultPrevented = false;
-    #propagationStopped = false;
-
-    #firesBeforesAndAfters = false;
-    #asAction;
-
     constructor(proxyListeners, pty, defaultResult) {
         super(proxyListeners, EVENT_TYPE_GET_PROPERTY);
-        this.#pty = pty;
-        this.#defaultResult = defaultResult;
-        this.#actualResult = defaultResult;
+        this._pty = pty;
+        this._defaultResult = defaultResult;
+        this._actualResult = defaultResult;
+        this._defaultPrevented = false;
+        this._propagationStopped = false;
+        this._firesBeforesAndAfters = false;
+        this._asAction = null;
     }
 
     get property() {
-        return this.#pty;
+        return this._pty;
     }
 
     get defaultResult() {
-        return this.#defaultResult;
+        return this._defaultResult;
     }
 
     get propagates() {
@@ -627,50 +598,48 @@ class GetPropertyEvent extends BaseProxyEvent {
     }
 
     get propagationStopped() {
-        return this.#propagationStopped;
+        return this._propagationStopped;
     }
 
     stopPropagation() {
-        this.#propagationStopped = true;
+        this._propagationStopped = true;
     }
 
     preventDefault(replacementResult, firesBeforesAndAfters, asAction) {
-        if (!this.#defaultPrevented) {
-            this.#defaultPrevented = true;
-            this.#propagationStopped = true;
-            this.#actualResult = replacementResult;
-            this.#firesBeforesAndAfters = (typeof firesBeforesAndAfters === 'boolean') && firesBeforesAndAfters && (typeof this.#actualResult === 'function');
-            if (this.#firesBeforesAndAfters) {
-                this.#asAction = '[[' + (asAction ? asAction : this.pty) + ']]';
+        if (!this._defaultPrevented) {
+            this._defaultPrevented = true;
+            this._propagationStopped = true;
+            this._actualResult = replacementResult;
+            this._firesBeforesAndAfters = (typeof firesBeforesAndAfters === 'boolean') && firesBeforesAndAfters && (typeof this._actualResult === 'function');
+            if (this._firesBeforesAndAfters) {
+                this._asAction = '[[' + (asAction ? asAction : this._pty) + ']]';
             }
         }
     }
 
     get defaultPrevented() {
-        return this.#defaultPrevented;
+        return this._defaultPrevented;
     }
 
     get firesBeforesAndAfters() {
-        return this.#firesBeforesAndAfters;
+        return this._firesBeforesAndAfters;
     }
 
     get asAction() {
-        return this.#asAction;
+        return this._asAction;
     }
 
     get result() {
-        return this.#actualResult;
+        return this._actualResult;
     }
 }
 
 class GetTreewalkerEvent extends BaseProxyEvent {
-    #treeWalker;
-
-    #defaultPrevented = false;
-    #propagationStopped = false;
-
     constructor(proxyListeners) {
         super(proxyListeners, EVENT_TYPE_GET_TREEWALKER);
+        this._treeWalker = null;
+        this._defaultPrevented = false;
+        this._propagationStopped = false;
     }
 
     get propagates() {
@@ -682,37 +651,37 @@ class GetTreewalkerEvent extends BaseProxyEvent {
     }
 
     get defaultPrevented() {
-        return this.#defaultPrevented;
+        return this._defaultPrevented;
     }
 
     preventDefault(treeWalker) {
         if (!treeWalker || typeof treeWalker !== 'function') {
             throw new TypeError('Supplied treeWalker on GetTreewalkerEvent.preventDefault() must be a function');
         }
-        if (!this.#defaultPrevented) {
-            this.#defaultPrevented = true;
-            this.#propagationStopped = true;
-            this.#treeWalker = treeWalker;
+        if (!this._defaultPrevented) {
+            this._defaultPrevented = true;
+            this._propagationStopped = true;
+            this._treeWalker = treeWalker;
         }
     }
 
     get propagationStopped() {
-        return this.#propagationStopped;
+        return this._propagationStopped;
     }
 
     stopPropagation() {
-        this.#propagationStopped = true;
+        this._propagationStopped = true;
     }
 
     get treeWalker() {
-        return this.#treeWalker;
+        return this._treeWalker;
     }
 }
 
 const ARRAY_FUNCTIONS_MAP = new Map([
     ['copyWithin',
         function() {
-           return this.masterArrayFunctionHandler('copyWithin', arguments, true);
+            return this.masterArrayFunctionHandler('copyWithin', arguments, true);
         }
     ],
     ['fill',
@@ -756,6 +725,7 @@ const ARRAY_FUNCTIONS_MAP = new Map([
         }
     ]
 ]);
+
 const ARRAY_FUNCTIONS_NO_DEFAULT_ACTION_RETURNS = new Map([
     ['pop',
         function(target) {
@@ -787,7 +757,7 @@ const ARRAY_FUNCTIONS_NO_DEFAULT_ACTION_RETURNS = new Map([
 const TYPED_ARRAY_FUNCTIONS_MAP = new Map([
     ['copyWithin',
         function() {
-           return this.masterArrayFunctionHandler('copyWithin', arguments, true);
+            return this.masterArrayFunctionHandler('copyWithin', arguments, true);
         }
     ],
     ['fill',
@@ -1016,82 +986,82 @@ const DATE_FUNCTIONS_MAP = new Map([
     ],
     ['setDate',
         function() {
-           return this.masterDateFunctionHandler('setDate', this.proxyListeners.target.getDate(), arguments);
+            return this.masterDateFunctionHandler('setDate', this.proxyListeners.target.getDate(), arguments);
         }
     ],
     ['setFullYear',
         function() {
-           return this.masterDateFunctionHandler('setFullYear', this.proxyListeners.target.getFullYear(), arguments);
+            return this.masterDateFunctionHandler('setFullYear', this.proxyListeners.target.getFullYear(), arguments);
         }
     ],
     ['setHours',
         function() {
-           return this.masterDateFunctionHandler('setHours', this.proxyListeners.target.getHours(), arguments);
+            return this.masterDateFunctionHandler('setHours', this.proxyListeners.target.getHours(), arguments);
         }
     ],
     ['setMilliseconds',
         function() {
-           return this.masterDateFunctionHandler('setMilliseconds', this.proxyListeners.target.getMilliseconds(), arguments);
+            return this.masterDateFunctionHandler('setMilliseconds', this.proxyListeners.target.getMilliseconds(), arguments);
         }
     ],
     ['setMinutes',
         function() {
-           return this.masterDateFunctionHandler('setMinutes', this.proxyListeners.target.getMinutes(), arguments);
+            return this.masterDateFunctionHandler('setMinutes', this.proxyListeners.target.getMinutes(), arguments);
         }
     ],
     ['setMonth',
         function() {
-           return this.masterDateFunctionHandler('setMonth', this.proxyListeners.target.getMonth(), arguments);
+            return this.masterDateFunctionHandler('setMonth', this.proxyListeners.target.getMonth(), arguments);
         }
     ],
     ['setSeconds',
         function() {
-           return this.masterDateFunctionHandler('setSeconds', this.proxyListeners.target.getSeconds(), arguments);
+            return this.masterDateFunctionHandler('setSeconds', this.proxyListeners.target.getSeconds(), arguments);
         }
     ],
     ['setTime',
         function() {
-           return this.masterDateFunctionHandler('setTime', this.proxyListeners.target.getTime(), arguments);
+            return this.masterDateFunctionHandler('setTime', this.proxyListeners.target.getTime(), arguments);
         }
     ],
     ['setUTCDate',
         function() {
-           return this.masterDateFunctionHandler('setUTCDate', this.proxyListeners.target.getUTCDate(), arguments);
+            return this.masterDateFunctionHandler('setUTCDate', this.proxyListeners.target.getUTCDate(), arguments);
         }
     ],
     ['setUTCFullYear',
         function() {
-           return this.masterDateFunctionHandler('setUTCFullYear', this.proxyListeners.target.getUTCFullYear(), arguments);
+            return this.masterDateFunctionHandler('setUTCFullYear', this.proxyListeners.target.getUTCFullYear(), arguments);
         }
     ],
     ['setUTCHours',
         function() {
-           return this.masterDateFunctionHandler('setUTCHours', this.proxyListeners.target.getUTCHours(), arguments);
+            return this.masterDateFunctionHandler('setUTCHours', this.proxyListeners.target.getUTCHours(), arguments);
         }
     ],
     ['setUTCMilliseconds',
         function() {
-           return this.masterDateFunctionHandler('setUTCMilliseconds', this.proxyListeners.target.getUTCMilliseconds(), arguments);
+            return this.masterDateFunctionHandler('setUTCMilliseconds', this.proxyListeners.target.getUTCMilliseconds(), arguments);
         }
     ],
     ['setUTCMinutes',
         function() {
-           return this.masterDateFunctionHandler('setUTCMinutes', this.proxyListeners.target.getUTCMinutes(), arguments);
+            return this.masterDateFunctionHandler('setUTCMinutes', this.proxyListeners.target.getUTCMinutes(), arguments);
         }
     ],
     ['setUTCMonth',
         function() {
-           return this.masterDateFunctionHandler('setUTCMonth', this.proxyListeners.target.getUTCMonth(), arguments);
+            return this.masterDateFunctionHandler('setUTCMonth', this.proxyListeners.target.getUTCMonth(), arguments);
         }
     ],
     ['setUTCSeconds',
         function() {
-           return this.masterDateFunctionHandler('setUTCSeconds', this.proxyListeners.target.getUTCSeconds(), arguments);
+            return this.masterDateFunctionHandler('setUTCSeconds', this.proxyListeners.target.getUTCSeconds(), arguments);
         }
     ],
     ['setYear',
         function() {
-           return this.masterDateFunctionHandler('setYear', this.proxyListeners.target.getYear(), arguments);
+            return this.masterDateFunctionHandler('setYear', this.proxyListeners.target.getYear(), arguments);
         }
     ],
     ['toDateString',
@@ -1159,17 +1129,17 @@ const DATE_FUNCTIONS_MAP = new Map([
 const MAP_FUNCTIONS_MAP = new Map([
     ['clear',
         function() {
-           return this.masterFunctionHandler('clear', arguments);
+            return this.masterFunctionHandler('clear', arguments);
         }
     ],
     ['delete',
         function() {
-           return this.masterFunctionHandler('delete', arguments);
+            return this.masterFunctionHandler('delete', arguments);
         }
     ],
     ['set',
         function() {
-           return this.masterFunctionHandler('set', arguments);
+            return this.masterFunctionHandler('set', arguments);
         }
     ],
 
@@ -1208,17 +1178,17 @@ const MAP_FUNCTIONS_MAP = new Map([
 const SET_FUNCTIONS_MAP = new Map([
     ['add',
         function() {
-           return this.masterFunctionHandler('add', arguments);
+            return this.masterFunctionHandler('add', arguments);
         }
     ],
     ['clear',
         function() {
-           return this.masterFunctionHandler('clear', arguments);
+            return this.masterFunctionHandler('clear', arguments);
         }
     ],
     ['delete',
         function() {
-           return this.masterFunctionHandler('delete', arguments);
+            return this.masterFunctionHandler('delete', arguments);
         }
     ],
 
