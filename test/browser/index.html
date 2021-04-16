@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>ListeningProxy - Browser Tests</title>
+        <link rel="stylesheet" href="../../node_modules/mocha/mocha.css" />
+        <script src="../../node_modules/mocha/mocha.js"></script>
+        <script src="../../node_modules/chai/chai.js"></script>
+        <script>
+            mocha.setup('bdd');
+        </script>
+        <script type="module" src="./index.js"></script>
+        <script>
+            window.onload = () => {
+                mocha.run();
+            };
+        </script>
+    </head>
+    <body>
+        <img src="../../docs/assets/ListeningProxy.js-logo.svg" style="padding: 10px 10px;">
+        <div id="mocha"></div>
+    </body>
+</html>
